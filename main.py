@@ -214,7 +214,7 @@ if __name__ == '__main__':
                 if data == None:
                     print('API返回空内容，停止遍历')
                     print(page)
-                    break  # 阻止盲目遍历
+                    break  # 阻止盲目遍历，不知道能否按预期工作
 
             end_page = reply_num // 20 + 1 if reply_num // 20 + 1 <= pages1 else pages1
             if page == end_page:
