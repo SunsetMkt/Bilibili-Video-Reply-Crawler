@@ -43,3 +43,26 @@ jobs:
         with:
           name: out.html
           path: out.html
+      - name: "计算SHA-256"
+        run: |
+          sha256sum out.html > sha256.txt
+      - name: "上传sha256.txt"
+        uses: actions/upload-artifact@v2
+        with:
+          name: sha256.txt
+          path: sha256.txt
+      - name: "回复issue"
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            // 读取sha256.txt的内容
+            const sha = require('fs').readFileSync('sha256.txt', 'utf8')
+            // 生成提交的内容
+            const body = `网页已保存，见Artifacts。\nSHA-256: ${sha}`
+            github.issues.createComment({
+              issue_number: issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            })

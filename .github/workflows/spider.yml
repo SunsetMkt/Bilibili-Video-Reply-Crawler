@@ -41,6 +41,14 @@ jobs:
         with:
           name: out.txt
           path: out.txt
+      - name: "计算SHA-256"
+        run: |
+          sha256sum out.txt > sha256.txt
+      - name: "上传sha256.txt"
+        uses: actions/upload-artifact@v2
+        with:
+          name: sha256.txt
+          path: sha256.txt
       - name: "回复issue"
         uses: actions/github-script@v3
         with:
