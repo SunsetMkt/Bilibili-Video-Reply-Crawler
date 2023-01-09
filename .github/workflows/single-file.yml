@@ -58,7 +58,8 @@ jobs:
           script: |
             // 读取sha256.txt的内容
             const sha = require('fs').readFileSync('sha256.txt', 'utf8')
-            // 生成提交的内容
+            // issue
+            const issue = context.payload.issue
             const body = `网页已保存，见Artifacts。\nSHA-256: ${sha}`
             github.issues.createComment({
               issue_number: issue.number,
