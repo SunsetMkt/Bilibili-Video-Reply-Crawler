@@ -4,6 +4,7 @@
 # Modified
 # 注：这里使用的API可能未更新，虽然能用，但是可能会有问题；IP属地信息仅会在有有效Cookies时才会包含在请求结果中，暂不支持。
 import argparse
+import hashlib
 import re
 import time
 
@@ -154,13 +155,16 @@ def get_reply(data, tab=0):
 if __name__ == '__main__':
     # ArgumentParser
     parser = argparse.ArgumentParser(description='Bilibili视频评论爬虫')
-    parser.add_argument('vid', type=str, help='视频BV号，格式为BVxxxxxx')
+    parser.add_argument('-v', '--video', type=str,
+                        help='视频BV号，格式为BVxxxxxx')
     parser.add_argument('-p', '--pages', type=int, help='爬取评论页数')
     parser.add_argument('-r', '--replies', type=int, help='爬取评论回复页数')
+    parser.add_argument('-o', '--output', type=str, help='输出文件名')
+    parser.add_argument('-V', '--verbose', action='store_true', help='显示详细信息')
     args = parser.parse_args()
 
-    if args.vid:
-        BV_CODE = args.vid
+    if args.video:
+        BV_CODE = args.video
         if args.pages:
             pages1 = args.pages
         else:
@@ -178,12 +182,21 @@ if __name__ == '__main__':
     sleep_time = 2.1  # 访问网页间隔，防止IP被禁，若运行程序后出现无法访问网页版BILIBILI评论区的现象，等待2小时即可~_~!
     oid = get_oid(BV_CODE)
 
-    fn = f'{BV_CODE}-{time.strftime("%Y%m%d-%H%M")}.txt'
+    if args.output:
+        fn = args.output
+    else:
+        fn = f'{BV_CODE}-{time.strftime("%Y%m%d-%H%M")}.txt'
+
     f = open(fn, 'w', encoding='utf-8')
     page = 1
     while True:
         try:
             data, reply_num = get_data(page, oid)
+
+            if args.verbose:
+                print(data)
+                print(reply_num)
+
             get_reply(data)  # 遍历所有回复
             end_page = reply_num // 20 + 1 if reply_num // 20 + 1 <= pages1 else pages1
             if page == end_page:
@@ -201,13 +214,15 @@ if __name__ == '__main__':
     f.close()
     print('成功结束')
 
-    """
+    if args.verbose:
+        # print f content
+        with open(fn, 'r', encoding='utf-8') as f:
+            print(f.read())
+
     # Generate sha256sum
-    import hashlib
     print('生成sha256sum')
     with open(fn, 'rb') as f:
         sha256 = hashlib.sha256(f.read()).hexdigest()
     with open(fn + '.sha256sum', 'w', encoding='utf-8') as f:
         f.write(sha256)
     print('sha256sum:', sha256)
-    """
