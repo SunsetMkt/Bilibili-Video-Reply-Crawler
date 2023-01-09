@@ -52,6 +52,10 @@ def get_data(page: int, oid: str):
     print(f'正在处理:{api_url}')  # 由于需要减缓访问频率，防止IP封禁，打印访问网址以查看访问进程
     r = requests.get(api_url, headers=hd, verify=False)
     r.raise_for_status()
+
+    if args.verbose:
+        print(r.json())
+
     return r.json()['data']['replies'], r.json()['data']['page']['count']
 
 
@@ -61,6 +65,10 @@ def get_folded_reply(page: int, oid: str, root: int):
     print(f'正在处理:{url}')  # 由于需要减缓访问频率，防止IP封禁，打印访问网址以查看访问进程
     r = requests.get(url, headers=hd, verify=False)
     r.raise_for_status()
+
+    if args.verbose:
+        print(r.json())
+
     return r.json()['data']
 
 
@@ -163,22 +171,25 @@ if __name__ == '__main__':
     parser.add_argument('-V', '--verbose', action='store_true', help='显示详细信息')
     args = parser.parse_args()
 
+    maxMode = False  # 阻止盲目遍历
+
     if args.video:
         BV_CODE = args.video
         if args.pages:
             pages1 = args.pages
         else:
             pages1 = 100000000
-            print('未指定爬取页数，默认爬取100000000页评论')
+            print('未指定爬取页数，默认爬取100000000页评论，直到API返回空内容')
+            maxMode = True  # 阻止盲目遍历
         if args.replies:
             pages2 = args.replies
         else:
             pages2 = 100000000
-            print('未指定爬取回复页数，默认爬取100000000页回复')
+            print('未指定爬取回复页数，默认爬取100000000页评论回复')
     else:
-        BV_CODE = str(input('请输入爬取评论的视频BV号:'))  # "BV1yv411r7WH"  # 视频的BV号
-        pages1 = int(input('请输入爬取"视频评论"的页数(每页20条),推荐10:'))
-        pages2 = int(input('请输入爬取"评论回复"的页数(每页10条),推荐03:'))
+        BV_CODE = str(input('请输入爬取评论的视频BV号：'))  # "BV1yv411r7WH"  # 视频的BV号
+        pages1 = int(input('请输入爬取“视频评论”的页数（每页20条），推荐10：'))
+        pages2 = int(input('请输入爬取“评论回复”的页数（每页10条），推荐03：'))
     sleep_time = 2.1  # 访问网页间隔，防止IP被禁，若运行程序后出现无法访问网页版BILIBILI评论区的现象，等待2小时即可~_~!
     oid = get_oid(BV_CODE)
 
@@ -198,6 +209,13 @@ if __name__ == '__main__':
                 print(reply_num)
 
             get_reply(data)  # 遍历所有回复
+
+            if maxMode:
+                if data == None:
+                    print('API返回空内容，停止遍历')
+                    print(page)
+                    break  # 阻止盲目遍历
+
             end_page = reply_num // 20 + 1 if reply_num // 20 + 1 <= pages1 else pages1
             if page == end_page:
                 break
