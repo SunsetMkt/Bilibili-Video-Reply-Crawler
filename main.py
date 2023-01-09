@@ -2,7 +2,12 @@
 # Python爬虫获取Bilibili视频评论
 # Source: https://zhuanlan.zhihu.com/p/275603349
 # Modified
-# 注：这里使用的API可能未更新，虽然能用，但是可能会有问题；IP属地信息仅会在有有效Cookies时才会包含在请求结果中，暂不支持。
+# 注：
+# 这里使用的API可能未更新，虽然能用，但是可能会有问题；
+# IP属地信息仅会在有有效Cookies时才会包含在请求结果中，暂不支持；
+# 由于哔哩哔哩API不是设计用于爬虫的，每次执行结果不可复现，也不保证保存所有评论；
+# 爬取评论数和哔哩哔哩网页显示总数可能不一致，无法解决，可能由于审查/系统设计问题导致部分评论被隐藏；
+# 专栏的type=12，oid 为专栏 cvid，已做支持；
 import argparse
 import hashlib
 import re
@@ -19,9 +24,12 @@ hd = {
 
 
 def get_oid(BV_CODE: str) -> str:
-    # oid 和 aid 是相同的
+    # oid 为稿件 avid https://github.com/SocialSisterYi/bilibili-API-collect
     # Source: https://www.zhihu.com/question/381784377/answer/1099438784
     # 注：这里请求 https://api.bilibili.com/x/web-interface/view?bvid=1yv411r7WH 也可以拿到 aid
+
+    global vidType
+
     table = 'fZodR9XQDSUm21yCkr6zBqiveYah8bt4xsWpHnJE7jL5VG3guMTKNPAwcF'
     tr = {}
     for i in range(58):
@@ -42,13 +50,25 @@ def get_oid(BV_CODE: str) -> str:
         for i in range(6):
             r[s[i]] = table[x//58**i % 58]
         return ''.join(r)
-
-    return str(dec(BV_CODE))
+    if BV_CODE.startswith('BV'):
+        vidType = 'bv'
+        return str(dec(BV_CODE))
+    elif BV_CODE.startswith('av'):
+        vidType = 'av'
+        return str(BV_CODE[2:])
+    elif BV_CODE.startswith('cv'):
+        vidType = 'cv'
+        return str(BV_CODE[2:])
 
 
 def get_data(page: int, oid: str):
+    global vidType
+
     time.sleep(sleep_time)  # 减少访问频率，防止IP封禁
-    api_url = f"https://api.bilibili.com/x/v2/reply?jsonp=jsonp&pn={page}&type=1&oid={oid}&sort=2&_={int(time.time())}"
+    if vidType == 'cv':
+        api_url = f"https://api.bilibili.com/x/v2/reply?jsonp=jsonp&pn={page}&type=12&oid={oid}&sort=2&_={int(time.time())}"
+    else:
+        api_url = f"https://api.bilibili.com/x/v2/reply?jsonp=jsonp&pn={page}&type=1&oid={oid}&sort=2&_={int(time.time())}"
     print(f'正在处理:{api_url}')  # 由于需要减缓访问频率，防止IP封禁，打印访问网址以查看访问进程
     r = requests.get(api_url, headers=hd, verify=False)
     r.raise_for_status()
@@ -60,8 +80,13 @@ def get_data(page: int, oid: str):
 
 
 def get_folded_reply(page: int, oid: str, root: int):
+    global vidType
+
     time.sleep(sleep_time)  # 减少访问频率，防止IP封禁
-    url = f'https://api.bilibili.com/x/v2/reply/reply?jsonp=jsonp&pn={page}&type=1&oid={oid}&ps=10&root={root}&_={int(time.time())}'
+    if vidType == 'cv':
+        url = f'https://api.bilibili.com/x/v2/reply/reply?jsonp=jsonp&pn={page}&type=12&oid={oid}&ps=10&root={root}&_={int(time.time())}'
+    else:
+        url = f'https://api.bilibili.com/x/v2/reply/reply?jsonp=jsonp&pn={page}&type=1&oid={oid}&ps=10&root={root}&_={int(time.time())}'
     print(f'正在处理:{url}')  # 由于需要减缓访问频率，防止IP封禁，打印访问网址以查看访问进程
     r = requests.get(url, headers=hd, verify=False)
     r.raise_for_status()
@@ -164,7 +189,7 @@ if __name__ == '__main__':
     # ArgumentParser
     parser = argparse.ArgumentParser(description='Bilibili视频评论爬虫')
     parser.add_argument('-v', '--video', type=str,
-                        help='视频BV号，格式为BVxxxxxx')
+                        help='视频BV号，格式为BVxxxxxx，或者av号，格式为avxxxxxx，或者cv号，格式为cvxxxxxx')
     parser.add_argument('-p', '--pages', type=int, help='爬取评论页数')
     parser.add_argument('-r', '--replies', type=int, help='爬取评论回复页数')
     parser.add_argument('-o', '--output', type=str, help='输出文件名')
@@ -172,6 +197,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     maxMode = False  # 阻止盲目遍历
+    vidType = 'bv'  # 视频类型，bv或cv，默认bv
 
     if args.video:
         BV_CODE = args.video
@@ -214,7 +240,7 @@ if __name__ == '__main__':
                 if data == None:
                     print('API返回空内容，停止遍历')
                     print(page)
-                    break  # 阻止盲目遍历，不知道能否按预期工作
+                    break  # 阻止盲目遍历，不知道能否按预期工作，似乎可以
 
             end_page = reply_num // 20 + 1 if reply_num // 20 + 1 <= pages1 else pages1
             if page == end_page:
