@@ -1,0 +1,45 @@
+name: "保存网页-从issue标题执行任务"
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  single-file:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: "获取issue标题"
+        id: get-issue
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          # 获取issue标题，保留并用于回复
+          result-encoding: string
+          script: |
+            // 获取issue标题
+            const title = context.payload.issue.title
+            const baseurl = "https://www.bilibili.com/"
+            // 若标题以cv开头，添加read/前缀，否则加video/前缀
+            const url = title.startsWith("cv") ? baseurl + "read/cv" + title.substring(2) : baseurl + "video/" + title
+            // 保存 "{name}={value}" >> $GITHUB_ENV
+            core.exportVariable('url', url)
+      - name: "echoURL"
+        run: echo ${{ env.url }}
+      - name: "Installation from Docker Hub"
+        run: |
+          docker pull capsulecode/singlefile
+          docker tag capsulecode/singlefile singlefile
+      - name: "根据保存的issue标题，执行任务"
+        run: |
+          docker run singlefile "${{ env.url }}" > out.html
+      - name: "上传out.html"
+        uses: actions/upload-artifact@v2
+        with:
+          name: out.html
+          path: out.html

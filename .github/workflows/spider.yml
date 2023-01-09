@@ -1,4 +1,4 @@
-name: "从issue标题执行任务"
+name: "评论爬虫-从issue标题执行任务"
 
 on:
   issues:
@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  build:
+  spider:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
