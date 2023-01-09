@@ -242,9 +242,12 @@ if __name__ == '__main__':
     if args.output:
         fn = args.output
     else:
-        fn = f'{BV_CODE}-{time.strftime("%Y%m%d-%H%M")}.txt'
+        fn = f'{BV_CODE}-{time.strftime("%Y%m%d-%H%M%S")}.txt'
 
     f = open(fn, 'w', encoding='utf-8')
+
+    f.write(f'{BV_CODE}-{time.strftime("%Y%m%d-%H%M%S")}\n')
+
     page = 1
     while True:
         try:
