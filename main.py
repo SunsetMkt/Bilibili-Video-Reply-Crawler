@@ -266,6 +266,10 @@ if __name__ == '__main__':
             if page == end_page:
                 break
             page += 1
+
+            # 渐进保存文件
+            f.flush()
+
         except Exception as e:
             print('ERROR:', e)
             import traceback
