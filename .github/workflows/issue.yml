@@ -45,13 +45,13 @@ jobs:
             const issue = context.payload.issue
             // 读取out.txt
             const out = fs.readFileSync('out.txt', 'utf8')
-            // 回复issue，maximum is 65536 characters，每65535个字符回复一次
-            const outArr = out.match(/[\s\S]{1,65535}/g)
+            // 回复issue，maximum is 65536 characters，每65500个字符回复一次
+            const outArr = out.match(/[\s\S]{1,65500}/g)
             for (let i = 0; i < outArr.length; i++) {
               github.issues.createComment({
                 issue_number: issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: outArr[i]
+                body: '分段'+(i+1)+'\n'+'```'+'\n'+outArr[i]+'\n'+'```'
               })
             }
