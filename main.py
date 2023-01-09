@@ -130,10 +130,19 @@ def loop_folded_reply(root: int, rcount: int):
             like = item['like']
             ctime = item['ctime']
             name = item['member']['uname']
+
             # message = item['content']['message']
-            message = re.sub(r'\t|\n|回复 @.*? :', '',
-                             item['content']['message'])
-            # print(dialog, rpid, parent, name, message)
+            if args.do_not_replace:
+                message = item['content']['message']
+                message = message.replace('\n', '\\n')
+                message = message.replace('\t', '\\t')
+            else:
+                message = re.sub(r'\t|\n|回复 @.*? :', '',
+                                 item['content']['message'])
+
+            if args.verbose:
+                print(dialog, rpid, parent, name, message)
+
             temp.append([dialog, rpid, parent, name, message])
             temp2[rpid] = [mid, message, name, like, ctime]
         # else:
@@ -175,7 +184,16 @@ def get_reply(data, tab=0):
         like = item['like']
         ctime = item['ctime']
         name = item['member']['uname']
-        message = re.sub(r'\t|\n|回复 @.*? :', '', item['content']['message'])
+
+        # 下面的正则的替代方案
+        if args.do_not_replace:
+            message = item['content']['message']
+            message = message.replace('\n', '\\n')
+            message = message.replace('\t', '\\t')
+        else:
+            message = re.sub(r'\t|\n|回复 @.*? :', '',
+                             item['content']['message'])  # 这会移除\t \n 和 回复 @xxx :
+
         f.write(
             '|\t' * tab + f'|->\t点赞：{like}\t评论："{message}"\tUSER：{name}(UID：{mid})\t{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ctime))}\n')
         print(f'处理评论:UID-{mid}\tUSER-{name}\t点赞-{like}')
@@ -194,6 +212,8 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--replies', type=int, help='爬取评论回复页数')
     parser.add_argument('-o', '--output', type=str, help='输出文件名')
     parser.add_argument('-V', '--verbose', action='store_true', help='显示详细信息')
+    parser.add_argument('--do-not-replace',
+                        action='store_true', help='不删除回复中的换行和回复提示')
     args = parser.parse_args()
 
     maxMode = False  # 阻止盲目遍历
@@ -267,6 +287,6 @@ if __name__ == '__main__':
     print('生成sha256sum')
     with open(fn, 'rb') as f:
         sha256 = hashlib.sha256(f.read()).hexdigest()
-    with open(fn + '.sha256sum', 'w', encoding='utf-8') as f:
-        f.write(sha256)
+    # with open(fn + '.sha256sum', 'w', encoding='utf-8') as f:
+    #     f.write(sha256)
     print('sha256sum:', sha256)
