@@ -59,4 +59,6 @@ jobs:
                 repo: context.repo.repo,
                 body: '分段'+(i+1)+'\n'+'```'+'\n'+outArr[i]+'\n'+'```'
               })
+              // 等待2秒
+              await new Promise(resolve => setTimeout(resolve, 2000))
             }
