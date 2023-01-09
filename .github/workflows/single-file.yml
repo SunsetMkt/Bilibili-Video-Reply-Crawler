@@ -61,7 +61,7 @@ jobs:
             // issue
             const issue = context.payload.issue
             const body = `网页已保存，见Artifacts。\nSHA-256: ${sha}`
-            github.issues.createComment({
+            github.rest.issues.createComment({
               issue_number: issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
