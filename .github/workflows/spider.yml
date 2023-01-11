@@ -37,7 +37,7 @@ jobs:
         run: |
           python main.py -v ${{ env.title }} -o out.txt -V --do-not-replace
       - name: "上传out.txt"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: out.txt
           path: out.txt
@@ -45,7 +45,7 @@ jobs:
         run: |
           sha256sum out.txt > sha256.txt
       - name: "上传sha256.txt"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: sha256.txt
           path: sha256.txt

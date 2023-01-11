@@ -39,7 +39,7 @@ jobs:
         run: |
           docker run singlefile "${{ env.url }}" > out.html
       - name: "上传out.html"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: out.html
           path: out.html
@@ -47,7 +47,7 @@ jobs:
         run: |
           sha256sum out.html > sha256.txt
       - name: "上传sha256.txt"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: sha256.txt
           path: sha256.txt
