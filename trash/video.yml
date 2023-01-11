@@ -1,5 +1,6 @@
 name: "保存视频-从issue标题执行任务"
-# 运行在Actions上的BBDown随机发生API返回404，怀疑为哔哩哔哩限制，暂时不知道如何解决，不建议使用此workflow
+# FIXME: 运行在Actions上的BBDown随机发生API返回404，怀疑为哔哩哔哩限制，暂时不知道如何解决，不建议使用此workflow
+# 参数 --use-app-api 似乎可以降低问题发生的概率，但是仍然会发生
 
 on:
   issues:
@@ -47,14 +48,24 @@ jobs:
         with:
           name: video
           path: "*.mp4"
+      - name: "计算SHA-256"
+        run: |
+          sha256sum *.mp4 > sha256.txt
+      - name: "上传sha256.txt"
+        uses: actions/upload-artifact@v3
+        with:
+          name: sha256.txt
+          path: sha256.txt
       - name: "回复issue"
         uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
+            // 读取sha256.txt的内容
+            const sha = require('fs').readFileSync('sha256.txt', 'utf8')
             // issue
             const issue = context.payload.issue
-            const body = `视频已保存，见Artifacts。`
+            const body = `视频已保存，见Artifacts。\nSHA-256: ${sha}`
             github.rest.issues.createComment({
               issue_number: issue.number,
               owner: context.repo.owner,
