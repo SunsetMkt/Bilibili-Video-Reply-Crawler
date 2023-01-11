@@ -1,4 +1,5 @@
 name: "保存视频-从issue标题执行任务"
+# 运行在Actions上的BBDown随机发生API返回404，怀疑为哔哩哔哩限制，暂时不知道如何解决，不建议使用此workflow
 
 on:
   issues:
@@ -31,13 +32,14 @@ jobs:
       - name: "echo标题"
         run: echo ${{ env.title }}
       - name: "apt-get install"
-        # Actions运行在Azure上，有默认的dotnet，安装dotnet-runtime-7.0会使BBDown运行错误，原因未知，总之不要安装dotnet-runtime-7.0
+        # Actions运行在Azure上，有默认的dotnet，不需要安装dotnet-runtime-7.0
         run: |
           sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: "install BBDown"
         run: |
           dotnet tool install --global BBDown
       - name: "根据保存的issue标题，执行任务"
+        # 运行在Actions上的BBDown随机发生API返回404，怀疑为哔哩哔哩限制，暂时不知道如何解决
         run: |
           BBDown --debug ${{ env.title }}
       - name: "上传视频"
