@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  bbdown:
+  video:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -31,8 +31,9 @@ jobs:
       - name: "echo标题"
         run: echo ${{ env.title }}
       - name: "apt-get install"
+        # Actions运行在Azure上，有默认的dotnet，安装dotnet-runtime-7.0会使BBDown运行错误，原因未知，总之不要安装dotnet-runtime-7.0
         run: |
-          sudo apt-get update && sudo apt-get install -y dotnet-runtime-7.0 ffmpeg
+          sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: "install BBDown"
         run: |
           dotnet tool install --global BBDown
@@ -44,27 +45,24 @@ jobs:
         with:
           name: video
           path: "*.mp4"
-      - name: "计算SHA-256"
-        run: |
-          sha256sum *.mp4 > sha256sum.txt
-      - name: "上传sha256.txt"
-        uses: actions/upload-artifact@v3
-        with:
-          name: sha256.txt
-          path: sha256.txt
       - name: "回复issue"
         uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            // 读取sha256.txt的内容
-            const sha = require('fs').readFileSync('sha256.txt', 'utf8')
             // issue
             const issue = context.payload.issue
-            const body = `视频已保存，见Artifacts。\nSHA-256: ${sha}`
+            const body = `视频已保存，见Artifacts。`
             github.rest.issues.createComment({
               issue_number: issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: body
+            })
+            // 添加tag
+            github.rest.issues.addLabels({
+              issue_number: issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ["video-saved"]
             })

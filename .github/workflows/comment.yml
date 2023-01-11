@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  spider:
+  comment:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -70,3 +70,10 @@ jobs:
               // 等待2秒
               await new Promise(resolve => setTimeout(resolve, 2000))
             }
+            // 添加tag
+            github.rest.issues.addLabels({
+              issue_number: issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ["comment-saved"]
+            })
