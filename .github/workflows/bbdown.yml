@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: video
-          path: *.mp4
+          path: "*.mp4"
       - name: "计算SHA-256"
         run: |
           sha256sum *.mp4 > sha256sum.txt
