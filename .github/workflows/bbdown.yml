@@ -1,0 +1,70 @@
+name: "保存视频-从issue标题执行任务"
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  bbdown:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: "获取issue标题"
+        id: get-issue
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          # 获取issue标题，保留并用于回复
+          result-encoding: string
+          script: |
+            // 获取issue标题
+            const title = context.payload.issue.title
+            // 保存变量，弃用 https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
+            // core.setOutput('title', title)
+            // 保存 "{name}={value}" >> $GITHUB_ENV
+            core.exportVariable('title', title)
+      - name: "echo标题"
+        run: echo ${{ env.title }}
+      - name: "apt-get install"
+        run: |
+          sudo apt-get update && sudo apt-get install -y dotnet-runtime-7.0 ffmpeg
+      - name: "install BBDown"
+        run: |
+          dotnet tool install --global BBDown
+      - name: "根据保存的issue标题，执行任务"
+        run: |
+          BBDown --debug ${{ env.title }}
+      - name: "上传视频"
+        uses: actions/upload-artifact@v3
+        with:
+          name: video
+          path: *.mp4
+      - name: "计算SHA-256"
+        run: |
+          sha256sum *.mp4 > sha256sum.txt
+      - name: "上传sha256.txt"
+        uses: actions/upload-artifact@v3
+        with:
+          name: sha256.txt
+          path: sha256.txt
+      - name: "回复issue"
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            // 读取sha256.txt的内容
+            const sha = require('fs').readFileSync('sha256.txt', 'utf8')
+            // issue
+            const issue = context.payload.issue
+            const body = `视频已保存，见Artifacts。\nSHA-256: ${sha}`
+            github.rest.issues.createComment({
+              issue_number: issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            })
