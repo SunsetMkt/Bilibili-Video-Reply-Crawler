@@ -1,4 +1,4 @@
-name: "保存视频-从issue标题执行任务"
+name: "保存视频和弹幕-从issue标题执行任务"
 # FIXME: 运行在Actions上的BBDown随机发生API返回404，怀疑为哔哩哔哩限制，暂时不知道如何解决，不建议使用此workflow
 # 参数 --use-tv-api 似乎可以降低问题发生的概率，但是仍然会发生
 
@@ -39,18 +39,21 @@ jobs:
       - name: "install BBDown"
         run: |
           dotnet tool install --global BBDown
+      - name: "Mkdir out"
+        run: mkdir out
       - name: "根据保存的issue标题，执行任务"
         # 运行在Actions上的BBDown随机发生API返回404，怀疑为哔哩哔哩限制，暂时不知道如何解决
         run: |
-          BBDown --debug ${{ env.title }}
-      - name: "上传视频"
+          BBDown --debug --use-tv-api --download-danmaku ${{ env.title }} --work-dir out
+      - name: "上传文件"
         uses: actions/upload-artifact@v3
         with:
-          name: video
-          path: "*.mp4"
+          name: out
+          path: "out"
       - name: "计算SHA-256"
+        # https://askubuntu.com/questions/1091335/create-checksum-sha256-of-all-files-and-directories
         run: |
-          sha256sum *.mp4 > sha256.txt
+          find out/ -type f -exec sha256sum {} \; > sha256.txt
       - name: "上传sha256.txt"
         uses: actions/upload-artifact@v3
         with:
