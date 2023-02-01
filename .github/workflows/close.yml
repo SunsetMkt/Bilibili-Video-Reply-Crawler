@@ -16,7 +16,7 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const issues = await github.issues.listForRepo({
+            const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
@@ -28,7 +28,7 @@ jobs:
               const diff = nowDate.getTime() - issueDate.getTime()
               const days = Math.floor(diff / (24 * 3600 * 1000))
               if (days > 3) {
-                await github.issues.update({
+                await github.rest.issues.update({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issue.number,
