@@ -1,0 +1,39 @@
+name: "关闭超过三天的issue"
+
+on:
+  workflow_dispatch:
+    
+permissions: write-all
+
+jobs:
+  page:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: "关闭超过三天的issue"
+        id: close-issue
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const issues = await github.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            })
+            for (const issue of issues.data) {
+              const issueDate = new Date(issue.created_at)
+              const nowDate = new Date()
+              const diff = nowDate.getTime() - issueDate.getTime()
+              const days = Math.floor(diff / (24 * 3600 * 1000))
+              if (days > 3) {
+                await github.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed'
+                })
+                console.log(`关闭issue: ${issue.number}`)
+              }
+            }
