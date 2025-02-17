@@ -10,10 +10,10 @@ jobs:
   page:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: "获取issue标题"
         id: get-issue
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           # 获取issue标题，保留并用于回复
@@ -36,7 +36,7 @@ jobs:
         run: |
           docker run singlefile "${{ env.url }}" > out.html
       - name: "上传out.html"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: out.html
           path: out.html
@@ -44,12 +44,12 @@ jobs:
         run: |
           sha256sum out.html > sha256.txt
       - name: "上传sha256.txt"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sha256.txt
           path: sha256.txt
       - name: "回复issue"
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
