@@ -56,7 +56,8 @@ def get_oid(BV_CODE: str) -> str:
     if BV_CODE.startswith("BV"):
         vidType = "bv"
         data = requests.get(
-            f"https://api.bilibili.com/x/web-interface/view?bvid={BV_CODE}"
+            f"https://api.bilibili.com/x/web-interface/view?bvid={BV_CODE}",
+            headers=hd,
         ).json()
         return str(data["data"]["aid"])
     elif BV_CODE.startswith("av"):
